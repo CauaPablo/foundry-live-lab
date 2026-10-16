@@ -1,0 +1,264 @@
+/**
+ * Spec 004 AC1, AC2, AC4, AC7, AC9, AC12 — the shell, end to end against a faked BFF.
+ *
+ * The fake answers `/config` and streams `/chat` as real SSE frames, so the path under test is the
+ * production one: `fetch` -> `ReadableStream` -> frame parser -> reducer -> DOM.
+ */
+import { act, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import App from './App'
+import { t } from './i18n/strings'
+import type { AgentEvent } from './types/events'
+import { asSseStream, failedTurn, twoToolTurn } from './test/fixtures'
+
+const CONFIG = {
+  harness: 'prompt-agent',
+  agent_name: 'foundry-live-agent',
+  agent_version: null,
+  model: 'example-analytics/gpt-4o',
+  uses_gateway: true,
+  project_name: 'proj-default',
+  event_types: [],
+  event_mapping: { total: 16, verified: 5, unverified: [], note: '' },
+}
+
+function fakeBff(events: AgentEvent[], config: unknown = CONFIG) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      if (String(url).endsWith('/config')) {
+        if (config === null) return new Response('nope', { status: 500 })
+        return new Response(JSON.stringify(config), { status: 200 })
+      }
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          // One chunk per frame, which is how it actually arrives.
+          for (const event of events) {
+            controller.enqueue(new TextEncoder().encode(asSseStream([event])))
+          }
+          controller.close()
+        },
+      })
+      return new Response(body, { status: 200 })
+    }),
+  )
+}
+
+// Since spec 024 the app writes its address, and jsdom keeps both the location and the stored
+// history across cases in a file. Without this, the second test mounts at the first test's
+// conversation and renders it *and* its own turn.
+beforeEach(() => {
+  localStorage.clear()
+  window.history.replaceState(null, '', '/')
+})
+
+afterEach(() => vi.unstubAllGlobals())
+
+async function ask(text = 'what time is it') {
+  const user = userEvent.setup()
+  await user.type(screen.getByRole('textbox'), text)
+  await user.click(screen.getByRole('button', { name: /send|enviar/i }))
+  return user
+}
+
+describe('App', () => {
+  it('lays out the sidebar, the main column and the trace panel', async () => {
+    fakeBff([])
+    render(<App />)
+
+    expect(screen.getByRole('complementary')).toBeInTheDocument()
+    expect(screen.getByRole('main')).toBeInTheDocument()
+    expect(screen.queryByTestId('trace-panel')).toBeNull()
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /traces|rastros/i }))
+    expect(screen.getByTestId('trace-panel')).toBeInTheDocument()
+  })
+
+  it('shows which harness the BFF is running', async () => {
+    fakeBff([])
+    render(<App />)
+    await waitFor(() =>
+      expect(screen.getByTestId('harness-badge')).toHaveTextContent('prompt-agent'),
+    )
+  })
+
+  it('discloses the model without printing the Foundry project name', async () => {
+    // The project id is a deployment detail nobody reads from a screenshot, and `model` arrives
+    // from the BFF as `<connection>/<model>` — in a real project both carry the project's name.
+    fakeBff([])
+    render(<App />)
+
+    const sidebar = screen.getByRole('complementary')
+    await userEvent.click(screen.getByRole('button', { name: /build information/i }))
+    await waitFor(() => expect(screen.getByTestId('build-info-model')).toHaveTextContent('gpt-4o'))
+    expect(screen.getByRole('dialog').textContent).not.toContain('proj-default')
+    expect(sidebar.textContent).not.toContain('proj-default')
+    expect(sidebar.textContent).not.toContain('example-analytics')
+  })
+
+  it('says so when the BFF is not answering rather than claiming a harness', async () => {
+    fakeBff([], null)
+    render(<App />)
+    await waitFor(() =>
+      expect(screen.getByTestId('harness-badge')).toHaveAttribute('data-known', 'false'),
+    )
+  })
+
+  it('streams a turn: reasoning, both kinds of tool, then the answer', async () => {
+    fakeBff(twoToolTurn)
+    render(<App />)
+    await ask()
+
+    await waitFor(() => expect(screen.getByTestId('answer')).toHaveTextContent('19:00'))
+
+    await userEvent.click(screen.getByRole('button', { name: t('reasoning.toggle', 'en') }))
+    expect(screen.getByTestId('reasoning-body')).toHaveTextContent('what time it is')
+
+    const [appRow, foundryRow] = screen.getAllByTestId('tool-row')
+    expect(appRow).toHaveAttribute('data-executor', 'app')
+    expect(within(appRow).getByTestId('executor-tag')).toHaveTextContent('bff')
+    expect(foundryRow).toHaveAttribute('data-executor', 'foundry')
+    expect(within(foundryRow).getByTestId('executor-tag')).toHaveTextContent('microsoft_learn')
+
+    // Spec 009 AC1: the payload is not in the chat any more. Spec 015 narrowed "payload" to what
+    // 009 was actually protecting the chat from — the *result*, a page of JSON between the question
+    // and the answer. The one argument that distinguishes a call now rides on its row, because
+    // seven calls to one tool were otherwise seven identical lines.
+    const main = screen.getByRole('main').textContent!
+    expect(main).not.toContain('"iso":"2026-09-04T19:00:00-03:00"')
+    expect(main).not.toContain('Foundry hosted agents run inside the service.')
+    expect(main).toContain('America/Sao_Paulo')
+
+    expect(screen.getByTestId('meta-line')).toHaveTextContent('154')
+  })
+
+  it('says the agent is working while the turn has produced nothing yet, then that it is writing', async () => {
+    // The gap between POST /chat and the first event is not instant — a reasoning model with a
+    // tool round trip can sit there for seconds. Until this, the turn drew an avatar and blank
+    // space, which reads as a frozen app rather than as waiting (§5).
+    let push: (event: AgentEvent) => void = () => {}
+    let close: () => void = () => {}
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (String(url).endsWith('/config')) {
+          return new Response(JSON.stringify(CONFIG), { status: 200 })
+        }
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            push = (event) =>
+              controller.enqueue(new TextEncoder().encode(asSseStream([event])))
+            close = () => controller.close()
+          },
+        })
+        return new Response(body, { status: 200 })
+      }),
+    )
+    render(<App />)
+    await ask()
+
+    expect(await screen.findByTestId('turn-pending')).toBeInTheDocument()
+
+    await act(async () => {
+      push({ type: 'text_delta', text: '13:53' })
+    })
+    await waitFor(() => expect(screen.getByTestId('answer')).toHaveTextContent('13:53'))
+    // Spec 061: the line stays, saying the agent is writing, until the turn settles.
+    expect(screen.getByTestId('turn-pending')).toHaveTextContent(/writing|escrevendo/i)
+
+    await act(async () => {
+      push({ type: 'done', response_id: 'resp_1' })
+      close()
+    })
+  })
+
+  it('opens the trace panel on the call whose row was pressed (spec 009, AC4)', async () => {
+    fakeBff(twoToolTurn)
+    render(<App />)
+    const user = await ask()
+
+    await waitFor(() => expect(screen.getAllByTestId('tool-row')).toHaveLength(2))
+    expect(screen.queryByTestId('trace-panel')).toBeNull()
+
+    await user.click(screen.getAllByTestId('tool-row')[0])
+
+    const panel = await screen.findByTestId('trace-panel')
+    expect(panel.querySelector('[data-call="call_1"]')).not.toBeNull()
+
+    // Spec 010 AC7: and the reader opens on that call, which is where the payload now lives.
+    expect(screen.getByTestId('log-viewer')).toHaveTextContent('get_current_datetime')
+    expect(screen.getByTestId('log-arguments')).toHaveTextContent('America/Sao_Paulo')
+    // The list still refuses the result; the argument that names the call is on the row (spec 015).
+    expect(within(panel).getByTestId('trace-activity').textContent).not.toContain(
+      '"iso":"2026-09-04T19:00:00-03:00"',
+    )
+  })
+
+  it('renders a terminal error as an error, not as a stream that stopped', async () => {
+    fakeBff(failedTurn)
+    render(<App />)
+    await ask()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('model deployment was not found')
+    expect(alert).toHaveTextContent('model_not_found')
+  })
+
+  it('renders every string in Portuguese when asked', async () => {
+    fakeBff([])
+    render(<App />)
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'pt' }))
+    expect(screen.getByRole('textbox')).toHaveAttribute('placeholder', 'Pergunte algo ao agente')
+  })
+})
+
+/**
+ * Spoken answers are built and parked (spec 008).
+ *
+ * The control sat next to Voice and read as a second way into the same thing, so it was taken off
+ * the header on 2026-09-16. The feature underneath is untouched — `useSpokenAnswers`, the player and
+ * the BFF's `/speech` endpoint all still work and are still tested — but nothing in the app mounts
+ * it, and this is what says so.
+ */
+describe('the header does not offer spoken answers', () => {
+  /** Like `fakeBff`, but with speech configured and every URL recorded. */
+  function bffWithSpeech() {
+    const urls: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        urls.push(String(url))
+        if (String(url).endsWith('/config')) {
+          return new Response(JSON.stringify({ ...CONFIG, speech: { enabled: true } }), {
+            status: 200,
+          })
+        }
+        if (String(url).endsWith('/speech')) return new Response(new Blob(['audio']), { status: 200 })
+        return new Response(asSseStream(twoToolTurn), { status: 200 })
+      }),
+    )
+    return urls
+  }
+
+  it('has no speak control, and none to stop it with', async () => {
+    bffWithSpeech()
+    render(<App />)
+
+    await waitFor(() => expect(screen.getByTestId('harness-badge')).toHaveTextContent('prompt'))
+    expect(screen.queryByRole('button', { name: /^(speak|falar)$/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /stop speaking|parar de falar/i })).toBeNull()
+  })
+
+  it('asks the BFF to synthesise nothing, even with speech configured', async () => {
+    const urls = bffWithSpeech()
+    render(<App />)
+    await ask()
+
+    await waitFor(() => expect(screen.getByTestId('answer')).toHaveTextContent('19:00'))
+    expect(urls.filter((url) => url.endsWith('/speech'))).toEqual([])
+  })
+})

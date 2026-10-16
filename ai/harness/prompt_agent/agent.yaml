@@ -1,0 +1,36 @@
+# The prompt agent, as code.
+#
+# WHAT this agent is — model, instructions, tools — lives in ../_shared/agent_core.yaml, shared with
+# every other harness (§4, spec 018). This file carries only what is true of *this* harness.
+#
+# This is OUR schema, not Microsoft's. Foundry's own agent.yaml (AgentSchema) is deprecated and its
+# replacement, azure.yaml, describes hosted agents — which this is not. See docs/harness-comparison.md.
+#
+# Applied by:  just agent   ->  ai/scripts/apply_agent.py  ->  project.agents.create_version(...)
+# Every apply creates a new immutable version; that is the rollback story.
+
+schema_version: foundry-live-agent/v1
+extends: ../_shared/agent_core.yaml
+
+name: foundry-live-agent
+description: >
+  Reference agent for foundry-live-agent. Answers questions about Microsoft Foundry using the
+  Microsoft Learn MCP server, about this repository using its own knowledge base, about the live
+  web using a search tool, and about the current time — the last three executed by the application.
+
+# Reasoning summaries — what the activity panel's reasoning card shows.
+#
+# Harness-specific, not shared: this configures Foundry's own prompt runtime. The hosted agent runs
+# our loop, so whether it produces summaries at all is a measurement (spec 018, AC13), not a setting.
+#
+# This MUST live on the agent definition. Observed 2026-09-15: sending `reasoning` on the request
+# instead gets HTTP 400 `invalid_payload` — "Not allowed when agent is specified". Without this
+# block the model still spends reasoning tokens (68 + 342 in the recorded turn) and still emits
+# `reasoning` output items, but every one of them carries `summary: []` and the card stays empty.
+#
+# `detailed`, not `auto`. Observed 2026-09-16 on version 4, which carried `summary: auto`: a turn
+# with seven tool-calling legs emitted a `reasoning` item on most of them and a summary on none —
+# `auto` leaves the choice to the model, and on short legs it chooses not to. `concise` is not an
+# option here: the GPT-5 series rejects it (docs/REFERENCES.md, reasoning models row).
+reasoning:
+  summary: detailed

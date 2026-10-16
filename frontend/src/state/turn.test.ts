@@ -1,0 +1,347 @@
+/** Spec 004 AC2, AC3, AC4, AC5, AC7 — the reducer, with no DOM in sight. */
+import { describe, expect, it } from 'vitest'
+import {
+  emptyTurn,
+  isSettled,
+  reduceEvents,
+  reduceTurn,
+  stopTurn,
+  turnStatus,
+  type Activity,
+  type Turn,
+} from './turn'
+import { failedTurn, repeatedCallTurn, twoToolTurn } from '../test/fixtures'
+
+describe('reduceEvents', () => {
+  it('concatenates reasoning fragments in order', () => {
+    expect(reduceEvents(twoToolTurn).reasoning).toBe('The user asked what time it is.')
+  })
+
+  it('concatenates answer fragments in order', () => {
+    expect(reduceEvents(twoToolTurn).text).toBe('It is 19:00 in Sao Paulo.')
+  })
+
+  it('keeps activities in the order the agent produced them', () => {
+    const turn = reduceEvents(twoToolTurn)
+    expect(turn.activities.map((a) => a.name)).toEqual([
+      'get_current_datetime',
+      'microsoft_docs_search',
+    ])
+  })
+
+  it('records who executed each activity', () => {
+    const [tool, mcp] = reduceEvents(twoToolTurn).activities
+    expect(tool).toMatchObject({ kind: 'tool', executor: 'app' })
+    expect(mcp).toMatchObject({ kind: 'mcp', serverLabel: 'microsoft_learn' })
+  })
+
+  it('leaves an unanswered app tool call running', () => {
+    const turn = reduceEvents(twoToolTurn.filter((e) => e.type !== 'tool_result'))
+    expect(turn.activities[0].status).toBe('running')
+  })
+
+  it('resolves a tool call to its result and duration', () => {
+    const [tool] = reduceEvents(twoToolTurn).activities
+    expect(tool).toMatchObject({
+      kind: 'tool',
+      status: 'ok',
+      durationMs: 3,
+    })
+    expect(tool.output).toContain('2026-09-04')
+  })
+
+  it('marks a tool result carrying an error as failed', () => {
+    const turn = reduceEvents([
+      ...twoToolTurn.slice(0, 3),
+      {
+        type: 'tool_result',
+        call_id: 'call_1',
+        name: 'get_current_datetime',
+        output: '{"error":"tool_failed"}',
+        error: 'ZoneInfoNotFoundError: nope',
+      },
+    ])
+    expect(turn.activities[0].status).toBe('failed')
+    expect(turn.activities[0].error).toContain('ZoneInfoNotFoundError')
+  })
+
+  it('carries usage and trace ids through', () => {
+    const turn = reduceEvents(twoToolTurn)
+    expect(turn.usage).toEqual({ inputTokens: 120, outputTokens: 34 })
+    expect(turn.trace).toMatchObject({ responseId: 'resp_1', conversationId: 'conv_1' })
+  })
+
+  it('ends a healthy turn as done', () => {
+    expect(reduceEvents(twoToolTurn).status).toBe('done')
+  })
+
+  it('ends a failed turn as an error, keeping the text streamed so far', () => {
+    const turn = reduceEvents(failedTurn)
+    expect(turn.status).toBe('error')
+    expect(turn.error).toMatchObject({ code: 'model_not_found' })
+    expect(turn.text).toBe('Let me check')
+  })
+
+  it('is still streaming while no terminal event has arrived', () => {
+    expect(reduceEvents(twoToolTurn.slice(0, 4)).status).toBe('streaming')
+  })
+
+  it('ignores an event type it does not know, and counts it', () => {
+    const turn = reduceEvents([
+      { type: 'text_delta', text: 'hi' },
+      { type: 'telepathy_delta', text: 'boo' } as never,
+      { type: 'done' },
+    ])
+    expect(turn.text).toBe('hi')
+    expect(turn.status).toBe('done')
+    expect(turn.unknownEvents).toEqual({ telepathy_delta: 1 })
+  })
+
+  it('does not mutate the turn it is given', () => {
+    const before = emptyTurn()
+    reduceTurn(before, { type: 'text_delta', text: 'hi' })
+    expect(before.text).toBe('')
+  })
+})
+
+/** Spec 011 AC1-AC6 — what the turn says is happening, derived from the events and nothing else. */
+describe('turnStatus', () => {
+  const streaming = (turn: Partial<Turn>): Turn => ({ ...emptyTurn(), ...turn })
+
+  const running: Activity = {
+    kind: 'tool',
+    step: 1,
+    executor: 'app',
+    callId: 'call_1',
+    name: 'lookup_knowledge',
+    arguments: '{}',
+    status: 'running',
+  }
+
+  it('says the agent is working before anything has arrived (AC1)', () => {
+    expect(turnStatus(emptyTurn())).toEqual({ kind: 'idle' })
+  })
+
+  it('says it is thinking once reasoning arrives (AC2)', () => {
+    expect(turnStatus(streaming({ reasoning: 'Considering the question.' }))).toEqual({
+      kind: 'thinking',
+    })
+  })
+
+  it('names the tool while a call is in flight (AC3)', () => {
+    expect(
+      turnStatus(streaming({ reasoning: 'Considering.', activities: [running] })),
+    ).toEqual({ kind: 'calling', name: 'lookup_knowledge', step: 1 })
+  })
+
+  it('goes back to thinking after a result, for a turn with no record of order (AC4; spec 061 fallback)', () => {
+    const settled: Activity = { ...running, status: 'ok', output: '{}', durationMs: 4 }
+    expect(turnStatus(streaming({ reasoning: 'Considering.', activities: [settled] }))).toEqual({
+      kind: 'thinking',
+    })
+  })
+
+  it('names the first call still running when two were made', () => {
+    const done: Activity = { ...running, callId: 'call_0', name: 'first', status: 'ok' }
+    expect(turnStatus(streaming({ activities: [done, running] }))).toEqual({
+      kind: 'calling',
+      name: 'lookup_knowledge',
+      // Spec 015: the status carries the running call's place in the turn, so the live line can
+      // say which step is running. Both activities here are spread from the same literal, so both
+      // carry step 1; what is under test is that the number reported is the running call's.
+      step: 1,
+    })
+  })
+
+  // Spec 061 supersedes AC5: the answer having started is a phase, not a reason to go quiet.
+  it('says it is writing once the answer has started (spec 061, AC5)', () => {
+    expect(turnStatus(streaming({ reasoning: 'r', text: 'It is 13:53' }))).toEqual({
+      kind: 'writing',
+    })
+  })
+
+  it('says nothing once the turn has settled (AC6)', () => {
+    expect(turnStatus(streaming({ status: 'done', reasoning: 'r' }))).toEqual({ kind: 'settled' })
+    expect(turnStatus(streaming({ status: 'error', activities: [running] }))).toEqual({
+      kind: 'settled',
+    })
+  })
+})
+
+describe('step numbers (spec 015)', () => {
+  it('numbers the calls in the order they arrived', () => {
+    const turn = reduceEvents(repeatedCallTurn)
+    expect(turn.activities.map((a) => a.step)).toEqual([1, 2, 3])
+  })
+
+  // The number counts what the agent did. Who ran it is the executor column's job (§8), so an MCP
+  // call takes its place in the sequence rather than leaving a gap in it.
+  it('counts app-executed and Foundry-executed calls in one unbroken sequence', () => {
+    const turn = reduceEvents(twoToolTurn)
+    expect(turn.activities.map((a) => [a.kind, a.step])).toEqual([
+      ['tool', 1],
+      ['mcp', 2],
+    ])
+  })
+
+  it('travels with the call, so a surface listing newest-first still numbers it right', () => {
+    const turn = reduceEvents(repeatedCallTurn)
+    expect([...turn.activities].reverse().map((a) => a.step)).toEqual([3, 2, 1])
+  })
+
+  // AC13: the turn is a function of the log. A clock would make it a function of when it was read.
+  it('records no timestamp anywhere in the turn', () => {
+    const turn = reduceEvents(repeatedCallTurn)
+    expect(JSON.stringify(turn)).not.toMatch(/\b1[6-9]\d{11}\b/)
+    expect(Object.keys(turn)).not.toContain('startedAt')
+  })
+})
+
+/**
+ * Spec 023 AC6 — a stopped turn.
+ *
+ * The transition is pure and lives here rather than in the hook, because "what a stopped turn is"
+ * is a fact about a turn, not about a fetch. `stopTurn` only moves a turn that was still running:
+ * an abort that lands after the last event must not un-finish a turn Foundry already completed.
+ */
+describe('stopTurn', () => {
+  it('moves a streaming turn to stopped', () => {
+    expect(stopTurn(reduceEvents(twoToolTurn.slice(0, 4))).status).toBe('stopped')
+  })
+
+  it('keeps everything the turn had already received', () => {
+    const partial = reduceEvents(twoToolTurn.slice(0, 6))
+    const stopped = stopTurn(partial)
+
+    expect(stopped.text).toBe(partial.text)
+    expect(stopped.reasoning).toBe(partial.reasoning)
+    expect(stopped.activities).toEqual(partial.activities)
+  })
+
+  it('is a no-op on a turn that already finished', () => {
+    const done = reduceEvents(twoToolTurn)
+    expect(done.status).toBe('done')
+    expect(stopTurn(done)).toBe(done)
+  })
+
+  it('is a no-op on a turn that failed', () => {
+    const failed = reduceEvents(failedTurn)
+    expect(failed.status).toBe('error')
+    expect(stopTurn(failed)).toBe(failed)
+  })
+
+  it('reports a stopped turn as settled, so the answer actions render', () => {
+    expect(isSettled(stopTurn(reduceEvents(twoToolTurn.slice(0, 4))))).toBe(true)
+  })
+
+  it('reports a streaming turn as not settled', () => {
+    expect(isSettled(reduceEvents(twoToolTurn.slice(0, 4)))).toBe(false)
+  })
+
+  it('says nothing more is pending once a turn is stopped', () => {
+    expect(turnStatus(stopTurn(reduceEvents(twoToolTurn.slice(0, 4)))).kind).toBe('settled')
+  })
+})
+
+/** Spec 028 AC5 — the cache reaches the renderer, or the estimate silently overstates every turn. */
+describe('usage carries the prompt cache', () => {
+  it('keeps the cached portion Foundry reported', () => {
+    const turn = reduceEvents([
+      { type: 'usage', input_tokens: 17401, output_tokens: 382, cached_input_tokens: 1024 },
+      { type: 'done' },
+    ])
+
+    expect(turn.usage?.cachedInputTokens).toBe(1024)
+  })
+
+  it('leaves it absent when the stream did not report one', () => {
+    const turn = reduceEvents([
+      { type: 'usage', input_tokens: 10, output_tokens: 2 },
+      { type: 'done' },
+    ])
+
+    expect(turn.usage?.cachedInputTokens).toBeUndefined()
+  })
+})
+
+/** Spec 061 — the phase follows what arrived last, and a running call outranks everything. */
+describe('the phase of a streaming turn (spec 061)', () => {
+  const call = { type: 'tool_call', executor: 'app', call_id: 'c1', name: 'lookup_knowledge', arguments: '{}' }
+  const result = { type: 'tool_result', call_id: 'c1', output: '{}', duration_ms: 3 }
+
+  it('is writing when text arrived last (AC5)', () => {
+    expect(turnStatus(reduceEvents([call, result, { type: 'text_delta', text: 'So.' }]))).toEqual({
+      kind: 'writing',
+    })
+  })
+
+  it('is calling when a tool starts after a preamble (AC6)', () => {
+    expect(
+      turnStatus(reduceEvents([{ type: 'text_delta', text: "I'll look it up." }, call])),
+    ).toEqual({ kind: 'calling', name: 'lookup_knowledge', step: 1 })
+  })
+
+  it('is the generic working after a result, thinking after reasoning (AC7)', () => {
+    expect(
+      turnStatus(reduceEvents([{ type: 'text_delta', text: "I'll look it up." }, call, result])),
+    ).toEqual({ kind: 'idle' })
+    expect(
+      turnStatus(
+        reduceEvents([{ type: 'text_delta', text: 'x' }, { type: 'reasoning_summary', text: 'Hm.' }]),
+      ),
+    ).toEqual({ kind: 'thinking' })
+  })
+
+  it('is settled once the turn ends (AC9)', () => {
+    expect(
+      turnStatus(reduceEvents([{ type: 'text_delta', text: 'x' }, { type: 'done', response_id: 'r' }])),
+    ).toEqual({ kind: 'settled' })
+  })
+})
+
+describe('a new leg after a tool call', () => {
+  const mcp = {
+    type: 'mcp_call',
+    server_label: 'microsoft_learn',
+    name: 'microsoft_docs_search',
+    arguments: '{}',
+    output: '[]',
+  }
+
+  it('starts a new paragraph instead of gluing the preamble to the answer', () => {
+    // Observed live (2026-10-15): "…na documentação da Microsoft.Agora são 21:31…". Each leg of
+    // a tool round trip streams its own text, and the model ends a preamble without a space.
+    const turn = reduceEvents([
+      { type: 'text_delta', text: 'Vou verificar na documentação.' },
+      mcp,
+      { type: 'text_delta', text: 'Agora são 21:31.' },
+    ])
+
+    expect(turn.text).toBe('Vou verificar na documentação.\n\nAgora são 21:31.')
+  })
+
+  it('adds nothing when the earlier text already ends in whitespace', () => {
+    const turn = reduceEvents([
+      { type: 'text_delta', text: 'Checking.\n' },
+      mcp,
+      { type: 'text_delta', text: 'Done.' },
+    ])
+
+    expect(turn.text).toBe('Checking.\nDone.')
+  })
+
+  it('adds nothing between deltas of the same leg', () => {
+    const turn = reduceEvents([
+      { type: 'text_delta', text: 'It is' },
+      { type: 'text_delta', text: ' 19:00.' },
+    ])
+
+    expect(turn.text).toBe('It is 19:00.')
+  })
+
+  it('adds nothing when no text came before the call', () => {
+    const turn = reduceEvents([mcp, { type: 'text_delta', text: 'Answer.' }])
+
+    expect(turn.text).toBe('Answer.')
+  })
+})

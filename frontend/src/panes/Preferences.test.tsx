@@ -1,0 +1,111 @@
+/**
+ * What this browser keeps (spec 036).
+ *
+ * The assertion this screen exists to defend is the negative one: nothing from `GET /config`
+ * appears here. `/about` is what the deployment decided and is read-only; this is what one browser
+ * prefers and every control writes. A deployment fact rendered beside a toggle would teach a reader
+ * that they can change it.
+ */
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import { PreferencesScreen } from './Preferences'
+import { LangContext } from '../i18n/context'
+import { t, type Lang } from '../i18n/strings'
+import { DEFAULTS, type PreferencesState } from '../state/preferences'
+
+function show(over: Partial<PreferencesState> = {}) {
+  const set = vi.fn()
+  const prefs: PreferencesState = { ...DEFAULTS, set, stored: true, ...over }
+  const view = render(
+    <LangContext.Provider value="en">
+      <PreferencesScreen prefs={prefs} />
+    </LangContext.Provider>,
+  )
+  return { ...view, set }
+}
+
+describe('what it says (AC8)', () => {
+  it('states that these are kept in this browser only', () => {
+    show()
+    expect(screen.getByText(t('prefs.lead', 'en'))).toBeInTheDocument()
+  })
+
+  it('says so when the browser will not store them (AC7)', () => {
+    show({ stored: false })
+    expect(screen.getByText(t('prefs.notStored', 'en'))).toBeInTheDocument()
+  })
+
+  it('does not say so when it will', () => {
+    show({ stored: true })
+    expect(screen.queryByText(t('prefs.notStored', 'en'))).not.toBeInTheDocument()
+  })
+})
+
+describe('the controls (AC1, AC5)', () => {
+  it.each<Lang>(['en', 'pt'])('does not promise parked reading or unsupported activity expansion in %s', (lang) => {
+    render(
+      <LangContext.Provider value={lang}>
+        <PreferencesScreen prefs={{ ...DEFAULTS, speakAnswers: true, activityOpen: true, set: vi.fn(), stored: true }} />
+      </LangContext.Provider>,
+    )
+    expect(screen.queryByRole('checkbox', { name: t('prefs.speakAnswers', lang) })).toBeNull()
+    expect(screen.queryByRole('checkbox', { name: t('prefs.activityOpen', lang) })).toBeNull()
+  })
+  it('offers three theme states and marks the current one', () => {
+    show({ theme: 'dark' })
+
+    expect(screen.getByRole('button', { name: t('prefs.theme.system', 'en') })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: t('prefs.theme.light', 'en') })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: t('prefs.theme.dark', 'en') })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  it('sets the theme that was chosen', async () => {
+    const { set } = show()
+
+    await userEvent.click(screen.getByRole('button', { name: t('prefs.theme.dark', 'en') }))
+
+    expect(set).toHaveBeenCalledWith('theme', 'dark')
+  })
+
+  it('sets a behaviour preference', async () => {
+    const { set } = show()
+
+    await userEvent.click(screen.getByRole('checkbox', { name: t('prefs.reasoningOpen', 'en') }))
+
+    expect(set).toHaveBeenCalledWith('reasoningOpen', true)
+  })
+
+  it('marks the language the interface is in, even before one was chosen', () => {
+    // It used to mark neither while the rail's EN | PT, beside it, marked EN — two controls for one
+    // preference disagreeing about its value (assessment 2026-10-15).
+    show({ lang: undefined })
+
+    expect(screen.getByRole('button', { name: 'en' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'pt' })).toHaveAttribute('aria-pressed', 'false')
+  })
+})
+
+describe('it is not the deployment (AC9)', () => {
+  it('renders nothing that GET /config reports', () => {
+    const { container } = show()
+    const text = container.textContent ?? ''
+
+    // The facts `/about` renders. None of them belongs beside a control that writes.
+    for (const fact of ['prompt-agent', 'gpt-5.5', 'Gateway', 'api-version', 'event']) {
+      expect(text).not.toContain(fact)
+    }
+  })
+
+  it('issues no request', () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    show()
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+})

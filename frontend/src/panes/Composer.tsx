@@ -1,0 +1,203 @@
+/**
+ * The input. The mic opens a voice session; it is disabled when the server has no Voice Live.
+ *
+ * Spec 021 added the row above it: the chip naming who is about to answer, and — when a restored
+ * conversation cannot be continued — the reason, in place of an input that would fail on send.
+ *
+ * Spec 023 made the field a real one. A question worth asking this agent is often three lines with
+ * a snippet in it, and typed into a single line it became a smear the author could not re-read
+ * before sending. The same spec gave the primary control a second job: while a turn is streaming it
+ * stops that turn, in the same position, so the hand that pressed send is already on it.
+ */
+import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
+import { VoicePicker } from '../components/VoicePicker'
+import { MicIcon, SendIcon, StopIcon } from '../components/Icon'
+import { useLang, useT } from '../i18n/context'
+
+interface Props {
+  /** A turn is in flight: the field waits, and the primary control stops instead of sending. */
+  streaming: boolean
+  voiceEnabled: boolean
+  /**
+   * Why voice is unavailable, when the reason is something other than the deployment (spec 020).
+   *
+   * The default reason is "this build has no Voice Live". Comparison mode disables it for a
+   * different reason — two spoken answers at once are not a feature — and a control that gives the
+   * wrong reason is worse than one that gives none (§5).
+   */
+  voiceReason?: string
+  /** Why this conversation cannot be continued, if it cannot (spec 021 AC18). */
+  blocked?: string
+  /** The agent chip. Passed in rather than built here: the composer knows nothing about agents. */
+  chip?: ReactNode
+  onSend: (text: string) => void
+  /** Stop the turn in flight. The browser stops listening; Foundry's run does not stop (spec 023). */
+  onStop: () => void
+  onVoice: () => void
+  /** What the deployment offers (spec 043). Fewer than two renders no chooser at all. */
+  voices?: string[]
+  voice?: string
+  onVoiceChange?: (voice: string) => void
+  /** So the `focusComposer` command can reach it (spec 025). */
+  inputRef?: React.RefObject<HTMLTextAreaElement | null>
+  /**
+   * A question handed back for editing (spec 026).
+   *
+   * Carries an `at` so two edits of the *same* text are two events. The field owns its text the rest
+   * of the time; this only replaces it when a new draft arrives.
+   */
+  draft?: { text: string; at: number }
+  /**
+   * The longest message the BFF accepts, from `GET /config` (spec 062). Absent: no bound is known,
+   * and the field behaves as it always did. Never a number of the composer's own (§4).
+   */
+  maxChars?: number
+}
+
+/** Past this the field scrolls itself rather than eating the conversation. Mirrored in the CSS. */
+const MAX_HEIGHT = '40vh'
+
+export function Composer({
+  streaming,
+  voiceEnabled,
+  voiceReason,
+  blocked,
+  chip,
+  onSend,
+  onStop,
+  onVoice,
+  voices = [],
+  voice,
+  onVoiceChange,
+  inputRef,
+  draft,
+  maxChars,
+}: Props) {
+  const s = useT()
+  const lang = useLang()
+  const [value, setValue] = useState('')
+  const own = useRef<HTMLTextAreaElement>(null)
+  const field = inputRef ?? own
+
+  // Adjusting state when a prop changes, rather than in an effect: React re-renders this component
+  // before touching the DOM, so there is no flash of the old text and no cascading render. An
+  // effect here would be synchronising with nothing external — the parent already knows.
+  const [seenDraft, setSeenDraft] = useState(draft?.at)
+  if (draft && draft.at !== seenDraft) {
+    setSeenDraft(draft.at)
+    setValue(draft.text)
+  }
+  const stopped = streaming || Boolean(blocked)
+  const tooLong = maxChars !== undefined && value.trim().length > maxChars
+
+  /**
+   * Grow with the content.
+   *
+   * Height is reset before it is read: `scrollHeight` on an element already tall enough reports the
+   * old height, so a field that grew would never shrink again. Layout effect rather than effect, so
+   * the two writes happen in one frame and the field never flickers at the wrong size.
+   */
+  useLayoutEffect(() => {
+    const element = field.current
+    if (!element) return
+    element.style.height = 'auto'
+    element.style.height = `${element.scrollHeight}px`
+  }, [field, value])
+
+  function submit() {
+    const text = value.trim()
+    if (!text || stopped || tooLong) return
+    setValue('')
+    onSend(text)
+  }
+
+  return (
+    <form
+      className="composer"
+      onSubmit={(event) => {
+        event.preventDefault()
+        submit()
+      }}
+    >
+      {blocked && (
+        <p className="composer__blocked" role="status">
+          {blocked}
+        </p>
+      )}
+
+      <textarea
+        ref={field}
+        rows={1}
+        className="composer__input"
+        style={{ maxHeight: MAX_HEIGHT }}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(event) => {
+          // `Shift+Enter` breaks a line; plain `Enter` sends. `isComposing` is not optional: without
+          // it, `Enter` confirming an input method's candidate would send half a word instead.
+          if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return
+          event.preventDefault()
+          submit()
+        }}
+        placeholder={s('composer.placeholder')}
+        aria-label={s('composer.placeholder')}
+        aria-describedby="composer-newline-hint"
+        disabled={stopped}
+      />
+      <span id="composer-newline-hint" className="composer__hint">
+        {s('composer.newline')}
+      </span>
+      {tooLong && (
+        <p className="composer__blocked" role="status" data-testid="composer-too-long">
+          {s('composer.tooLong').replace('{n}', (maxChars ?? 0).toLocaleString(lang))}
+        </p>
+      )}
+
+      {/* One row under the question: who answers on the left, what to do with it on the right.
+          The controls used to sit beside the input with the chip stranded underneath them, which
+          read as two unrelated bars stacked. */}
+      {/* Before the session starts, where the voice control is (spec 043). A session already
+          running is not reconfigured. */}
+      {voiceEnabled && onVoiceChange && (
+        <VoicePicker voices={voices} value={voice} onChange={onVoiceChange} />
+      )}
+
+      <div className="composer__row">
+        {chip}
+        <div className="composer__actions">
+          <button
+            type="button"
+            className="composer__mic"
+            disabled={!voiceEnabled || streaming}
+            title={voiceEnabled ? undefined : (voiceReason ?? s('header.voiceUnavailable'))}
+            aria-label={s('composer.voiceInput')}
+            onClick={onVoice}
+          >
+            <MicIcon size={17} />
+          </button>
+          {streaming ? (
+            <button
+              type="button"
+              className="composer__stop"
+              aria-label={s('composer.stop')}
+              title={s('composer.stop')}
+              onClick={onStop}
+            >
+              <StopIcon size={17} />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="composer__send"
+              disabled={stopped || tooLong || !value.trim()}
+              aria-label={s('composer.send')}
+            >
+              <SendIcon size={17} />
+            </button>
+          )}
+        </div>
+      </div>
+    </form>
+  )
+}
