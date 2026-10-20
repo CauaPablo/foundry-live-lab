@@ -38,6 +38,8 @@ _REQUIRED = ("schema_version", "name", "model", "instructions", "tools")
 # "Not allowed when agent is specified" — so it belongs to the definition or nowhere.
 _REASONING_KEYS = ("summary", "effort", "mode", "context")
 _SUMMARY_VALUES = ("auto", "concise", "detailed")
+# Read from the reasoning-models page (docs/REFERENCES.md, the reasoning models row) — spec 065.
+_EFFORT_VALUES = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 
 # The sandbox a hosted agent runs in (spec 018, AC11). Validated rather than passed through for
 # the same reason `reasoning` is: a size Foundry does not offer fails at deploy time, long after
@@ -269,6 +271,13 @@ def _reasoning(raw: Any, path: Path) -> dict[str, str] | None:
         raise AgentSpecError(
             f"{path}: reasoning.summary is {summary!r}; "
             f"Foundry accepts {', '.join(_SUMMARY_VALUES)}"
+        )
+
+    effort = raw.get("effort")
+    if effort is not None and effort not in _EFFORT_VALUES:
+        raise AgentSpecError(
+            f"{path}: reasoning.effort is {effort!r}; the reasoning models accept "
+            f"{', '.join(_EFFORT_VALUES)}"
         )
 
     return {key: str(value) for key, value in raw.items()}

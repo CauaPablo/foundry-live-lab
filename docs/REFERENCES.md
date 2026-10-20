@@ -379,6 +379,27 @@ from connecting Application Insights to the project.
 |---|---|---|
 | Azure OpenAI reasoning models — GPT-6 Astra and GPT-5 | https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/reasoning | Reasoning summaries via **`reasoning={"effort": …, "summary": "auto"}`** — `auto`/`concise`/`detailed`, **GPT-5 series do not support `concise`**. `reasoning_effort`: `none`/`minimal`/`low`/`medium`/`high`/`xhigh`/`max`. Current families: `gpt-6-astra`, `gpt-5.6-{sol,terra,luna}`, `gpt-5.5`, `gpt-5.4`(+mini/nano/pro), `gpt-5.3-codex`, `gpt-5.2`, `gpt-5.1`, `gpt-5`. **`gpt-5.4` and `gpt-5.5` support interleaved thinking on the Responses API.** **Use the Responses API for tool calling with reasoning models** — Chat Completions requires `reasoning_effort="none"` alongside `tools` on GPT-5.6+. Updated 2026-09-04. |
 
+### Reasoning effort on the agent definition — spec 065, verified 2026-10-16
+
+> **Accepted on the definition.** `create_version` took `reasoning: {summary: detailed, effort: low}`
+> (`foundry-live-agent` version 10), and `GET /agents/foundry-live-agent` reads it back. The page
+> shows `effort` only on a request; that it is also a *definition* field is this observation.
+>
+> **Before and after, two text turns each over `POST /chat`, same questions, same BFF** — a sample,
+> not a benchmark:
+>
+> | Question | Version | First text | Whole turn | `search_web` calls | Reasoning tokens |
+> |---|---|---|---|---|---|
+> | *Quem fez os gols do último jogo do Brasil?* | 9 (no effort) | 8.5 s | 97 s | 8 | 427 |
+> | | 10 (`low`) | 4.9 s | 27 s | 3 | 104 |
+> | *Qual foi o último jogo do Corinthians?* | 9 | 13.0 s | 40 s | 4 | 208 |
+> | | 10 | 3.1 s | 10 s | 1 | 14 |
+>
+> The motivating voice measurement (App Insights, session 2026-10-16 12:01–12:04 UTC, version 9):
+> 8–13 s between `invoke_agent` starting and its `chat` span on turns that went on to search, under
+> 1 s on turns that did not. Most of the saving is **fewer search legs**, each of which costs a
+> Foundry round trip of roughly 4.5–6 s including the ~2 s search itself.
+
 ## Provisioning (azd / Bicep)
 
 | Page | URL | Taken from it |

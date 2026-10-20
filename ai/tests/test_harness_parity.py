@@ -83,7 +83,7 @@ def test_only_the_prompt_agent_asks_foundry_for_reasoning_summaries(prompt_agent
     Whether a hosted turn produces summaries at all is AC13's measurement, not a setting we get to
     assert here.
     """
-    assert prompt_agent.reasoning == {"summary": "detailed"}
+    assert prompt_agent.reasoning == {"summary": "detailed", "effort": "low"}
     assert hosted.reasoning is None
 
 

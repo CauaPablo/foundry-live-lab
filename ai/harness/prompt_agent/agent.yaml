@@ -32,5 +32,11 @@ description: >
 # with seven tool-calling legs emitted a `reasoning` item on most of them and a summary on none —
 # `auto` leaves the choice to the model, and on short legs it chooses not to. `concise` is not an
 # option here: the GPT-5 series rejects it (docs/REFERENCES.md, reasoning models row).
+#
+# `effort: low` since spec 065. Measured 2026-10-16 on version 9, which set no effort: a spoken
+# question that needed a search waited 8–13 s before the agent said it would look — silence, in a
+# voice call. Text and voice share this definition, and Foundry refuses `reasoning` per request,
+# so this is the one place the trade is made for both.
 reasoning:
   summary: detailed
+  effort: low

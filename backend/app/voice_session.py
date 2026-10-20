@@ -89,6 +89,11 @@ class VoiceSession:
         self._closed = False
         self._claimed = False
         self._watchdog: asyncio.Task[None] | None = None
+        # When to ask the agent to continue — see `_continue_if_ready`. Per response id: the calls
+        # it made that are not answered yet, and the responses that have reached `response.done`.
+        self._unanswered: dict[str, set[str]] = {}
+        self._ended: dict[str, str] = {}
+        self._tools: set[asyncio.Task[None]] = set()
         #: Voice Live's SDP answer, once `negotiate` has it.
         self.answer: str | None = None
 
@@ -156,6 +161,8 @@ class VoiceSession:
             self._pump.cancel()
         if self._watchdog is not None and self._watchdog is not asyncio.current_task():
             self._watchdog.cancel()
+        for tool in self._tools:
+            tool.cancel()
         await self._socket.close()
         await self._events.put(None)
 
@@ -203,13 +210,54 @@ class VoiceSession:
                 (negotiated.get("turn_detection") or {}).get("type"),
             )
 
+        if frame.get("type") == "error":
+            # The service refusing something we sent — a `response.create` it would not take, a
+            # malformed item. Forwarded as an event below, but without this line the process log
+            # is silent about exactly the failure that makes the agent stop talking.
+            _log.warning("voice session %s: service error %s", self.id, frame.get("error"))
+
         for event in normalise_voice([frame]):
             await self._events.put(event)
 
         if is_function_call(frame):
-            await self._answer(frame["call_id"], frame["name"], frame.get("arguments") or "{}")
+            response_id = frame.get("response_id") or ""
+            self._unanswered.setdefault(response_id, set()).add(frame["call_id"])
+            # A task, so this loop keeps reading while the tool runs — the `response.done` that
+            # decides when to continue arrives during it.
+            tool = asyncio.create_task(
+                self._answer(
+                    frame["call_id"], frame["name"], frame.get("arguments") or "{}", response_id
+                )
+            )
+            self._tools.add(tool)
+            tool.add_done_callback(self._tools.discard)
+        elif frame.get("type") == "response.done":
+            response = frame.get("response") or {}
+            response_id = response.get("id") or ""
+            if response_id in self._unanswered:
+                self._ended[response_id] = response.get("status") or ""
+                await self._continue_if_ready(response_id)
 
-    async def _answer(self, call_id: str, name: str, arguments: str) -> None:
+    async def _continue_if_ready(self, response_id: str) -> None:
+        """Ask for the next response, once: this one is over and every call it made is answered.
+
+        `response.function_call_arguments.done` arrives before the `response.done` of the response
+        that emitted it; in the preamble recording, before that response's audio is finished. A
+        tool that returns in that window used to send `response.create` while the response was
+        still active, and one per call when a response made two. Waiting for both conditions is
+        the protocol's own boundary, not a decision (§8).
+
+        A response that ended `cancelled` is not resumed: barge-in cancelled it, and the response
+        the person's speech opens already sees the outputs — resuming would talk over them.
+        """
+        if response_id not in self._ended or self._unanswered.get(response_id):
+            return
+        status = self._ended.pop(response_id)
+        del self._unanswered[response_id]
+        if status != "cancelled":
+            await self._socket.send(json.dumps({"type": "response.create"}))
+
+    async def _answer(self, call_id: str, name: str, arguments: str, response_id: str = "") -> None:
         """Run the tool and hand the output back. Never raises: `execute` already can't.
 
         **In a worker thread.** `execute` is synchronous and `search_web` is an HTTP round trip to a
@@ -231,5 +279,7 @@ class VoiceSession:
         await self._events.put(event)  # type: ignore[arg-type]
 
         await self._socket.send(json.dumps(tool_output_frame(call_id, result.output)))
-        # Submitting the output is not enough — the agent resumes only when asked to.
-        await self._socket.send(json.dumps({"type": "response.create"}))
+        # Submitting the output is not enough — the agent resumes only when asked to, and only
+        # once its response is over.
+        self._unanswered.get(response_id, set()).discard(call_id)
+        await self._continue_if_ready(response_id)

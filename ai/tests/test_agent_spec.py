@@ -126,6 +126,23 @@ def test_rejects_a_reasoning_summary_foundry_does_not_accept(tmp_path):
         load_agent_spec(write(tmp_path, bad))
 
 
+def test_rejects_a_reasoning_effort_foundry_does_not_offer(tmp_path):
+    """Spec 065, AC1. The set is the reasoning-models page's (docs/REFERENCES.md); a typo here
+    would otherwise surface at `create_version`, or not at all."""
+    bad = VALID + "\nreasoning:\n  effort: lowest\n"
+    with pytest.raises(AgentSpecError, match="lowest"):
+        load_agent_spec(write(tmp_path, bad))
+
+
+def test_the_shipped_agent_asks_for_low_reasoning_effort():
+    """Spec 065, AC2. A spoken question that needed a search waited 8–13 s before the agent said
+    it would look (App Insights, 2026-10-16, version 9, no effort set): silence, in a voice call.
+    """
+    shipped = Path(__file__).resolve().parent.parent / "harness" / "prompt_agent" / "agent.yaml"
+    spec = load_agent_spec(shipped)
+    assert spec.reasoning["effort"] == "low"
+
+
 def test_the_shipped_agent_asks_for_reasoning_summaries():
     """Without this the activity panel's reasoning card is permanently empty — the recorded
     contrast between the two fixtures is exactly this one setting.
@@ -138,7 +155,7 @@ def test_the_shipped_agent_asks_for_reasoning_summaries():
     from pathlib import Path
 
     shipped = Path(__file__).resolve().parent.parent / "harness" / "prompt_agent" / "agent.yaml"
-    assert load_agent_spec(shipped).reasoning == {"summary": "detailed"}
+    assert load_agent_spec(shipped).reasoning == {"summary": "detailed", "effort": "low"}
 
 
 # --- the spoken preamble (spec 016) ---------------------------------------

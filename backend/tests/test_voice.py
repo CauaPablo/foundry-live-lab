@@ -239,7 +239,9 @@ async def session_events(socket: FakeSocket, count: int) -> list[dict]:
 
 async def test_a_voice_tool_call_produces_the_same_events_as_a_text_one():
     """AC4 — the activity panel has no voice-specific branch: there is nothing to branch on."""
-    events = await session_events(FakeSocket(RECORDED), 2)
+    # Four, not two: the tool runs while the loop keeps reading, so the recording's `usage` frames
+    # arrive before its result does.
+    events = await session_events(FakeSocket(RECORDED), 4)
 
     call = next(e for e in events if e["type"] == "tool_call")
     result = next(e for e in events if e["type"] == "tool_result")
@@ -254,7 +256,7 @@ async def test_a_voice_tool_call_produces_the_same_events_as_a_text_one():
 async def test_every_call_is_answered_or_the_session_errors():
     """AC5. Voice Live waits on an unanswered call exactly as the Responses API does; in a spoken
     conversation the symptom is the agent going quiet mid-sentence."""
-    events = await session_events(FakeSocket(RECORDED), 2)
+    events = await session_events(FakeSocket(RECORDED), 4)
 
     calls = {e["call_id"] for e in events if e["type"] == "tool_call"}
     answered = {e["call_id"] for e in events if e["type"] == "tool_result"}
