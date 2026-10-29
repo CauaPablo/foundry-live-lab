@@ -557,7 +557,7 @@ seus custos contínuos.
 
 <div align="center">
 
-**MIT** © [Reginaldo Silva](https://github.com/reginaldosilva27) — Data Engineer / AI Engineer, Microsoft MVP
+**MIT** © [Cauã Carvalho](https://github.com/CauaPablo) — foundry-live-lab · obra original © [Reginaldo Silva](https://github.com/reginaldosilva27)
 
 Feito como referência e como material didático. Issues e PRs são bem-vindos.
 

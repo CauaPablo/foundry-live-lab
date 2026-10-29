@@ -189,4 +189,4 @@ This document changes only by intent, not by accident:
 
 ---
 
-*Ratified: 2026-09-04 · Maintainer: Reginaldo Silva*
+*Ratified: 2026-09-04 · Maintainer: Cauã Carvalho*
