@@ -1,4 +1,4 @@
-# Project Constitution — foundry-live-agent
+# Project Constitution — foundry-live-lab
 
 > The non-negotiable principles every spec, plan, and change must respect.
 > Written once, amended deliberately (see *Amendment process*). When a spec or a

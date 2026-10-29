@@ -73,7 +73,7 @@ def create_app(
         executor.shutdown(wait=False, cancel_futures=True)
 
     app = FastAPI(
-        title="foundry-live-agent BFF",
+        title="foundry-live-lab BFF",
         description="Streams a Microsoft Foundry agent. Contains no agent-loop logic.",
         version="0.1.0",
         lifespan=lifespan,

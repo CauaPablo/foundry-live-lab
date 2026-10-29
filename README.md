@@ -1,15 +1,17 @@
 <div align="center">
 
-# 🎙️ foundry-live-agent
+# 🎙️ foundry-live-lab
 
 ### Microsoft Foundry Agent Service, end to end — with swappable agent harnesses
 
 **The agent runs *in* Foundry. This repo is the app built *around* it.**
 Streaming chat · live agent activity · distributed traces · real-time voice
 
+<sub>Originally published as [reginaldosilva27/foundry-live-agent](https://github.com/reginaldosilva27/foundry-live-agent).</sub>
+
 <br />
 
-[![One turn in the foundry-live-agent shell: the question, the collapsed reasoning card, four numbered activity rows — two run by the BFF, two by Foundry — and the answer](docs/assets/screenshot-chat.png)](docs/assets/screenshot-chat.png)
+[![One turn in the foundry-live-lab shell: the question, the collapsed reasoning card, four numbered activity rows — two run by the BFF, two by Foundry — and the answer](docs/assets/screenshot-chat.png)](docs/assets/screenshot-chat.png)
 
 _One turn, whole. Two rows marked `bff` are function tools **this app** executed because Foundry
 asked and stopped; two marked `microsoft_learn` ran **inside Foundry**. That split is the
@@ -348,8 +350,8 @@ The commands below target macOS/Linux with Bash; use WSL2 on Windows.
 Installation downloads packages; replay itself calls neither Azure nor Tavily.
 
 ```bash
-git clone https://github.com/reginaldosilva27/foundry-live-agent
-cd foundry-live-agent
+git clone https://github.com/CauaPablo/foundry-live-lab
+cd foundry-live-lab
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e "ai[dev]" -e "backend[dev]"

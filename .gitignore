@@ -23,7 +23,7 @@ dist/
 # OS
 .DS_Store
 
-# --- foundry-live-agent ---------------------------------------------------
+# --- foundry-live-lab -----------------------------------------------------
 # azd environment state — contains subscription/resource names, never commit
 .azure/
 # Bicep build output

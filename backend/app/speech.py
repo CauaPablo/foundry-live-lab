@@ -30,7 +30,7 @@ __all__ = ["build_ssml", "build_synthesizer", "MP3_FORMAT"]
 MP3_FORMAT = "audio-24khz-48kbitrate-mono-mp3"
 
 _SCOPE = "https://cognitiveservices.azure.com/.default"
-_USER_AGENT = "foundry-live-agent"
+_USER_AGENT = "foundry-live-lab"
 
 
 def build_ssml(text: str, voice: str) -> str:

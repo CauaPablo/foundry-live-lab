@@ -1,5 +1,7 @@
-# Reviewed false positives (assessment 2026-10-15). Both are the localStorage key name
-# `fla.favourites.v1`, which the generic-api-key rule reads as a token. Ignored by fingerprint, so a
-# real secret on any other line still fails the scan.
-14494a56ada92b91e8c369b8ba251054066d530a:frontend/src/state/favourites.ts:generic-api-key:17
-14494a56ada92b91e8c369b8ba251054066d530a:specs/022-agent-favourites/plan.md:generic-api-key:46
+# Reviewed false positive (assessment 2026-10-15). The localStorage key name `fla.favourites.v1`,
+# which the generic-api-key rule reads as a token. Ignored by fingerprint, so a real secret on any
+# other line still fails the scan.
+# Re-pointed 2026-10-29: the v0.1.0 release squashed the history, so the finding now lives in
+# 9a0d956 rather than 14494a5. The second entry (frontend/src/state/favourites.ts:17) was dropped:
+# the key moved to `state/storage.ts`, in a form the rule does not match.
+9a0d956e6976bb91e35b159185373b72e763ee75:specs/022-agent-favourites/plan.md:generic-api-key:46

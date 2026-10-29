@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img">
-  <!-- Foundry Live Agent.
+  <!-- Foundry Live Lab.
        A solid core held inside a ring that is deliberately open: the agent runs in Foundry, and
        this repository is the app around it. The two gaps are where the app reaches in — the
        function calls it executes on the agent's behalf.

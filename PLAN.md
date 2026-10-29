@@ -1,4 +1,4 @@
-# foundry-live-agent — PLAN
+# foundry-live-lab — PLAN
 
 > **Architecture record, reconciled with code and committed evidence.** Spec status lives only in
 > [specs/README.md](specs/README.md), not a manually counted total here. Prompt and hosted agents

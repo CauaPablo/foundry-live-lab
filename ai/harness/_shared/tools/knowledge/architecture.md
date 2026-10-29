@@ -1,6 +1,6 @@
 # Architecture
 
-foundry-live-agent is a full-stack application built around an agent that runs inside Microsoft
+foundry-live-lab is a full-stack application built around an agent that runs inside Microsoft
 Foundry. The frontend and backend contain no agent-loop logic.
 
 ## The BFF
