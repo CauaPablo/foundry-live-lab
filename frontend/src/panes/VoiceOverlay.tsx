@@ -99,7 +99,7 @@ export function VoiceOverlay({ voice, elapsed, onEnd }: Props) {
                     {line.speaker === 'user' ? (
                       <MicIcon size={12} />
                     ) : (
-                      <img src="/icon-foundry-live-agent-branco.svg" alt="" width="12" height="12" />
+                      <img src="/icon-foundry-live-lab-branco.svg" alt="" width="12" height="12" />
                     )}
                   </span>
                   {line.text}

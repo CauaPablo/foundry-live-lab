@@ -1,7 +1,7 @@
 [project]
-name = "foundry-live-agent-ai"
+name = "foundry-live-lab-ai"
 version = "0.1.0"
-description = "Agent harnesses, agent definitions and client-side tools for foundry-live-agent"
+description = "Agent harnesses, agent definitions and client-side tools for foundry-live-lab"
 requires-python = ">=3.12"
 # httpx backs the `search_web` tool's one POST. It is already a backend/ dependency; the
 # tools live here, so the declaration belongs here too.

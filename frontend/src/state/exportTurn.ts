@@ -161,5 +161,5 @@ export function exportFilename(title: string, at: Date): string {
     .slice(0, 48)
     .replace(/-+$/, '')
   const day = at.toISOString().slice(0, 10)
-  return ['foundry-live-agent', slug, day].filter(Boolean).join('-') + '.md'
+  return ['foundry-live-lab', slug, day].filter(Boolean).join('-') + '.md'
 }

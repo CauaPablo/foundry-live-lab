@@ -12,7 +12,7 @@ This file provides guidance to **OpenAI Codex** (and any other AI coding agent t
 
 ## What this is
 
-**foundry-live-agent** — an open-source reference implementation of **Microsoft Foundry Agent
+**foundry-live-lab** — an open-source reference implementation of **Microsoft Foundry Agent
 Service** end to end. A full-stack chat and voice application built *around* an agent that runs
 *inside* Foundry, with **swappable agent harnesses** behind one contract. It is a runnable project
 and teaching material for the Brazilian data/AI community.

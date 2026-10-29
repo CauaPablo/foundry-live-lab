@@ -1,15 +1,17 @@
 <div align="center">
 
-# 🎙️ foundry-live-agent
+# 🎙️ foundry-live-lab
 
 ### Microsoft Foundry Agent Service, ponta a ponta — com harnesses de agente intercambiáveis
 
 **O agente roda *dentro* do Foundry. Este repositório é a aplicação construída *ao redor* dele.**
 Chat com streaming · atividade do agente ao vivo · traces distribuídos · voz em tempo real
 
+<sub>Publicado originalmente como [reginaldosilva27/foundry-live-agent](https://github.com/reginaldosilva27/foundry-live-agent).</sub>
+
 <br />
 
-[![Um turno na interface do foundry-live-agent: a pergunta, o card de raciocínio recolhido, quatro linhas numeradas de atividade — duas executadas pelo BFF, duas pelo Foundry — e a resposta](docs/assets/screenshot-chat.png)](docs/assets/screenshot-chat.png)
+[![Um turno na interface do foundry-live-lab: a pergunta, o card de raciocínio recolhido, quatro linhas numeradas de atividade — duas executadas pelo BFF, duas pelo Foundry — e a resposta](docs/assets/screenshot-chat.png)](docs/assets/screenshot-chat.png)
 
 _Um turno inteiro. As duas linhas marcadas `bff` são function tools que **esta aplicação** executou
 porque o Foundry pediu e parou; as duas marcadas `microsoft_learn` rodaram **dentro do Foundry**.
@@ -350,8 +352,8 @@ Os comandos abaixo são para macOS/Linux com Bash; no Windows use WSL2.
 A instalação baixa pacotes; depois o replay não chama Azure nem Tavily.
 
 ```bash
-git clone https://github.com/reginaldosilva27/foundry-live-agent
-cd foundry-live-agent
+git clone https://github.com/CauaPablo/foundry-live-lab
+cd foundry-live-lab
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e "ai[dev]" -e "backend[dev]"

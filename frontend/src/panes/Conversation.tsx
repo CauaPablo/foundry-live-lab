@@ -175,7 +175,7 @@ export function Conversation({
           ) : (
             <section key={message.id} className="turn" aria-label={s('turn.agent')}>
               <div className="turn__avatar" aria-hidden="true">
-                <img src="/icon-foundry-live-agent-branco.svg" alt="" width="12" height="12" />
+                <img src="/icon-foundry-live-lab-branco.svg" alt="" width="12" height="12" />
               </div>
 
               <div className="turn__stack">

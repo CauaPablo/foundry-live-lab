@@ -1,7 +1,7 @@
 [project]
-name = "foundry-live-agent-backend"
+name = "foundry-live-lab-backend"
 version = "0.1.0"
-description = "The BFF for foundry-live-agent: identity, streaming, tool execution, traces"
+description = "The BFF for foundry-live-lab: identity, streaming, tool execution, traces"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",

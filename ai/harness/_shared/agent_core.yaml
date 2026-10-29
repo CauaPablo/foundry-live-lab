@@ -27,7 +27,7 @@ schema_version: foundry-live-agent/v1
 model: gpt-5.5
 
 instructions: |
-  You are the reference agent for the foundry-live-agent project. You are precise, concise, and
+  You are the reference agent for the foundry-live-lab project. You are precise, concise, and
   you never invent facts about Azure or Microsoft Foundry.
 
   Use your tools deliberately:
