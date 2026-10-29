@@ -379,7 +379,7 @@ which recorded turn to watch from the information icon in the header. A compact 
 stays visible; the disclosure holds the recording date and explanation, model, gateway and SSE facts.
 Voice entry remains in the chat composer, not the header (spec 059).
 
-![A turn replaying: the reasoning card fills in, four tool rows land one by one, then the answer streams in](docs/assets/demo-streaming-turn.gif)
+![A turn replaying: the live line says the agent is working, its four tool calls fold into one line, then the answer streams in](docs/assets/demo-streaming-turn.gif)
 
 _One turn, replayed. The reasoning summary arrives first, then the two function calls this app runs
 and the two Microsoft Learn calls Foundry runs, then the answer. Nothing here is a mock: these are
@@ -442,8 +442,8 @@ Optional — the AI Gateway is a portal flow with no IaC path: `just gateway` pr
 ## 📸 Screenshots
 
 Every shot below is from `just demo`, at the widths named — so each one is a thing you can put on
-your own screen in about a minute, with no Azure account. The banner shown in these historical captures belongs to that recorded build, not a mock-up.
-The current UI keeps a compact Replay label and puts its details behind the information icon (spec 059).
+your own screen in about a minute, with no Azure account. The compact Replay label in the header is the demo saying so; its details sit behind the information
+icon (spec 059). `node docs/assets/demo-captures/capture.mjs` retakes all of them.
 
 | | |
 |---|---|
@@ -451,7 +451,7 @@ The current UI keeps a compact Replay label and puts its details behind the info
 | **The trace drawer** (specs 005, 014). `invoke_agent` over two Learn MCP calls and the model call, with real durations — and the line that matters: *"Foundry traces what Foundry runs. Tools this app executes leave no span."* That is §8 showing up in telemetry. | **The event inspector** (spec 038), at 1680px where it takes a column of its own. Every normalized BFF SSE event of the turn, filtered by type, with the contract's own honesty report above it: *21 of 25 Foundry event names verified against a recorded run.* |
 | [![The agents screen: ten agent cards from a real project, each with kind, version, status and harness; the hosted one dimmed](docs/assets/screenshot-agents.png)](docs/assets/screenshot-agents.png) | [![The same agents screen in the dark theme](docs/assets/screenshot-dark.png)](docs/assets/screenshot-dark.png) |
 | **The agents screen** (specs 019, 030). Ten agents from a real Foundry project — eight of which this repository did not write. The dimmed card is not hidden: it says, in the reader's language, *why* it cannot answer. | **Two themes** (specs 036, 060). Light is the default, a sun/moon switch in the rail flips it, and `system` removes the attribute rather than writing one. Every colour literal lives in the vendored palette; `app.css` names tokens and a test enforces it. |
-| [![Two phone-width frames side by side: a turn at 390px, and the navigation rail open over it](docs/assets/screenshot-narrow.png)](docs/assets/screenshot-narrow.png) | [![A failed turn rendered as an error card reading "the BFF answered 502"](docs/assets/screenshot-error.png)](docs/assets/screenshot-error.png) |
+| [![Two phone-width frames side by side: a turn at 390px, and the navigation rail open over it](docs/assets/screenshot-narrow.png)](docs/assets/screenshot-narrow.png) | [![A failed turn rendered as an error card reading "Failed to fetch"](docs/assets/screenshot-error.png)](docs/assets/screenshot-error.png) |
 | **390px** (spec 047). The rail is never hidden — below 760px it comes **over** the conversation, because `display: none` takes a control out of the accessibility tree too, and this one is the only route to five of the seven screens. | **A turn that failed** (spec 003). The BFF was stopped mid-session on purpose. A turn always ends in `done` or `error` and never just goes quiet — §9's promise, rendered. |
 
 <details>

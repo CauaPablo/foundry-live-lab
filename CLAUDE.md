@@ -521,6 +521,8 @@ violation.
   the Voice Live session lifecycle · hosted continuity · charts in answers.
 - `docs/assets/message-journey/` — the source of the README's "follow one message" GIFs
   (`journey.html`, bilingual) and `record.mjs`, which regenerates them; move it with the code it cites.
+- `docs/assets/demo-captures/capture.mjs` — retakes the README's screenshots and the streaming GIF
+  from `just demo`, BFF stop included for the error shot; the voice shot needs a live session.
 - `docs/REFERENCES.md` — every Foundry doc URL and API version relied on (§10).
 - `docs/development-workflow.md` — SDD + TDD, the contributor companion to the constitution.
 - `docs/learning-journey.md` ↔ `docs/learning-journey.pt-BR.md` — educational modules, evidence and
