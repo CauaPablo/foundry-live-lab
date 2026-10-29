@@ -17,7 +17,7 @@ export type Lang = (typeof LANGS)[number]
 type Entry = Record<Lang, string>
 
 export const strings = {
-  'app.name': { en: 'Foundry Live Agent', pt: 'Foundry Live Agent' },
+  'app.name': { en: 'Foundry Live Lab', pt: 'Foundry Live Lab' },
 
   // --- Side by side (spec 020) -------------------------------------------
   // The screen says what it is and, once, that it is not judging. Nothing else here describes an

@@ -14,7 +14,7 @@ extends: ../_shared/agent_core.yaml
 
 name: foundry-live-agent
 description: >
-  Reference agent for foundry-live-agent. Answers questions about Microsoft Foundry using the
+  Reference agent for foundry-live-lab. Answers questions about Microsoft Foundry using the
   Microsoft Learn MCP server, about this repository using its own knowledge base, about the live
   web using a search tool, and about the current time — the last three executed by the application.
 

@@ -1,4 +1,4 @@
-# foundry-live-agent — task runner
+# foundry-live-lab — task runner
 #
 # One documented command per service. The GATE recipes deliberately restate nothing:
 # they run exactly the commands in .specify/constitution.md "Quality gates", which

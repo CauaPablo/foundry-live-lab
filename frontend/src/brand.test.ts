@@ -13,8 +13,8 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const root = join(import.meta.dirname, '..')
-const AZUL = 'icon-foundry-live-agent-azul.svg'
-const BRANCO = 'icon-foundry-live-agent-branco.svg'
+const AZUL = 'icon-foundry-live-lab-azul.svg'
+const BRANCO = 'icon-foundry-live-lab-branco.svg'
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {

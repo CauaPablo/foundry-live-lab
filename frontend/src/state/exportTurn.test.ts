@@ -94,12 +94,12 @@ describe('turnToMarkdown', () => {
 describe('exportFilename', () => {
   it('names the file after the question, safely', () => {
     const name = exportFilename('What time is it in São Paulo?', new Date('2026-09-16T12:00:00Z'))
-    expect(name).toMatch(/^foundry-live-agent-what-time-is-it-in-s-o-paulo-2026-09-16\.md$/)
+    expect(name).toMatch(/^foundry-live-lab-what-time-is-it-in-s-o-paulo-2026-09-16\.md$/)
   })
 
   it('falls back to the product name when the title reduces to nothing', () => {
     expect(exportFilename('？？？', new Date('2026-09-16T12:00:00Z'))).toBe(
-      'foundry-live-agent-2026-09-16.md',
+      'foundry-live-lab-2026-09-16.md',
     )
   })
 })

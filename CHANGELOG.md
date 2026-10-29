@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **The project is now `foundry-live-lab`**, at `github.com/CauaPablo/foundry-live-lab`. The
+  product name, the browser title, the brand mark's file names, the package names, the BFF's title
+  and User-Agent, and the exported conversation's file name follow it. The **agent names in
+  Foundry do not** (`foundry-live-agent`, `foundry-live-agent-hosted`): they name deployed
+  resources and appear in recordings of real runs (§5), so renaming them is a deployment step, not
+  a text edit. Neither does `schema_version: foundry-live-agent/v1`, a format identifier. The
+  agent's instructions now name the new project, so a deployed agent reports drift until
+  `apply_agent.py` runs again.
+
 ## [0.1.0] — 2026-10-16
 
 First public release. The repository's history starts here: how each piece came to be is told in
@@ -765,5 +775,5 @@ than in commits. The entries below are that history, in summary.
   reaches the gateway and comes back `404`, which the UI renders as a terminal error. Recorded
   rather than worked around (§5).
 
-[Unreleased]: https://github.com/reginaldosilva27/foundry-live-agent/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/CauaPablo/foundry-live-lab/commits/main
 [0.1.0]: https://github.com/reginaldosilva27/foundry-live-agent/releases/tag/v0.1.0

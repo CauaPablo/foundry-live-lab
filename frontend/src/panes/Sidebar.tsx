@@ -142,8 +142,8 @@ export function Sidebar({
     >
       <div className="sidebar__head">
         <div className="sidebar__brand">
-          <img className="sidebar__logo--light" src="/icon-foundry-live-agent-azul.svg" alt="" width="20" height="20" />
-          <img className="sidebar__logo--dark" src="/icon-foundry-live-agent-branco.svg" alt="" width="20" height="20" />
+          <img className="sidebar__logo--light" src="/icon-foundry-live-lab-azul.svg" alt="" width="20" height="20" />
+          <img className="sidebar__logo--dark" src="/icon-foundry-live-lab-branco.svg" alt="" width="20" height="20" />
           <span className="sidebar__product">{s('app.name')}</span>
           {/* One control, two jobs, because they are the same job: put the rail away. As a column
               it collapses; as an overlay (spec 047) it closes, and says so — a backdrop dismisses

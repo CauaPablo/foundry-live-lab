@@ -5,7 +5,7 @@
 Please **do not open a public issue** for a security problem.
 
 Report it privately through
-[GitHub Security Advisories](https://github.com/reginaldosilva27/foundry-live-agent/security/advisories/new).
+[GitHub Security Advisories](https://github.com/CauaPablo/foundry-live-lab/security/advisories/new).
 Include what you found, how to reproduce it, and the impact you expect. You'll get an
 acknowledgement within a few days.
 
