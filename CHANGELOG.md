@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **TypeScript 7** (`~7.0.2`, the native port). The 0.1.0 entry held it back because the i18n
+  gate in `frontend/src/i18n/strings.test.ts` parsed components with `ts.createSourceFile`, which
+  TypeScript 7 publishes only under `typescript/unstable/*`. The gate now parses with Vite's
+  `parseAst` (oxc, through rolldown, already a dependency). Before the swap, both parsers were run
+  over all 90 files in `components/` and `panes/` and agreed on all 1,087 JSX texts and literal
+  attributes. A new case checks the gate against a sample with known answers, so a parser that
+  finds no JSX at all can no longer pass it silently. `tsc -b` type-checks the project in ~0.5s.
 - **The project is now `foundry-live-lab`**, at `github.com/CauaPablo/foundry-live-lab`. The
   product name, the browser title, the brand mark's file names, the package names, the BFF's title
   and User-Agent, and the exported conversation's file name follow it. The **agent names in
