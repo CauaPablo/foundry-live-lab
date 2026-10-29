@@ -1,7 +1,7 @@
 /** Spec 004 AC10, AC11 — constitution §7 (bilingual) and the brand's no-emoji rule. */
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import ts from 'typescript'
+import { parseAst } from 'vite'
 import { describe, expect, it } from 'vitest'
 import { LANGS, INTENTIONALLY_IDENTICAL, strings, detectLang, t } from './strings'
 
@@ -53,6 +53,21 @@ describe('the UI', () => {
     }
   })
 
+  it('finds the prose it exists to find, and nothing that only looks like it', () => {
+    // The guard below passing on the real components proves nothing if the parser found no JSX at
+    // all, so it is checked against a sample with known answers first.
+    const sample = `
+      const big = (a: number) => a > 1
+      export function Sample<T>({ x }: { x: T }) {
+        return (
+          <p title="Read me" placeholder="Type here" className="not prose" aria-label={s('k')}>
+            Loose words <b>{s('x')}</b> {String(x)} - 1
+          </p>
+        )
+      }`
+    expect(prose('sample.tsx', sample)).toEqual(['title="Read me"', 'placeholder="Type here"', 'Loose words'])
+  })
+
   it('has no prose written directly into a component', () => {
     for (const { path, text } of sourceFiles(['components', 'panes'])) {
       expect(prose(path, text), `${path} should take its text from strings.ts`).toEqual([])
@@ -66,29 +81,40 @@ const USER_FACING_ATTRIBUTES = new Set(['aria-label', 'placeholder', 'title', 'a
 /**
  * Every readable literal a component renders, found on the JSX syntax tree rather than by regex.
  * A pattern over the source text cannot tell an arrow function from a closing tag; the parser can.
+ *
+ * The parser is Vite's `parseAst` (oxc, through rolldown), not the TypeScript compiler API: from
+ * TypeScript 7 that API is only published under `typescript/unstable/*`, and `vite` is already a
+ * dependency. The tree is ESTree, so it is walked by key rather than through a typed visitor.
  */
 function prose(path: string, text: string): string[] {
-  const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   const found: string[] = []
 
   const readable = (value: string) => /[A-Za-z]{2,}/.test(value)
 
-  const visit = (node: ts.Node) => {
-    if (ts.isJsxText(node) && readable(node.text)) {
-      found.push(node.text.trim())
+  const visit = (value: unknown): void => {
+    if (Array.isArray(value)) return value.forEach(visit)
+    if (!value || typeof value !== 'object') return
+    const node = value as { type?: string; [key: string]: unknown }
+
+    if (node.type === 'JSXText' && typeof node.value === 'string' && readable(node.value)) {
+      found.push(node.value.trim())
     }
-    if (
-      ts.isJsxAttribute(node) &&
-      node.initializer &&
-      ts.isStringLiteral(node.initializer) &&
-      USER_FACING_ATTRIBUTES.has(node.name.getText(source)) &&
-      readable(node.initializer.text)
-    ) {
-      found.push(`${node.name.getText(source)}="${node.initializer.text}"`)
+    if (node.type === 'JSXAttribute') {
+      const name = (node.name as { name?: unknown }).name
+      const literal = node.value as { type?: string; value?: unknown } | null
+      if (
+        typeof name === 'string' &&
+        USER_FACING_ATTRIBUTES.has(name) &&
+        literal?.type === 'Literal' &&
+        typeof literal.value === 'string' &&
+        readable(literal.value)
+      ) {
+        found.push(`${name}="${literal.value}"`)
+      }
     }
-    ts.forEachChild(node, visit)
+    for (const key in node) visit(node[key])
   }
 
-  visit(source)
+  visit(parseAst(text, { lang: path.endsWith('.tsx') ? 'tsx' : 'ts' }, path))
   return found
 }
