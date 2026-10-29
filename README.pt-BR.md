@@ -382,7 +382,7 @@ normalizador de verdade. Escolha qual turno gravado assistir pelo ícone de info
 Replay permanece visível; o painel reúne data e explicação da gravação, modelo, gateway e SSE.
 A entrada de voz fica no compositor do chat, não no cabeçalho (spec 059).
 
-![Um turno sendo reproduzido: o card de raciocínio se preenche, quatro linhas de ferramenta chegam uma a uma, e então a resposta faz streaming](docs/assets/demo-streaming-turn.gif)
+![Um turno sendo reproduzido: a linha ao vivo diz que o agente está trabalhando, as quatro chamadas de ferramenta se recolhem numa linha, e então a resposta faz streaming](docs/assets/demo-streaming-turn.gif)
 
 _Um turno, reproduzido. O resumo do raciocínio chega primeiro, depois as duas function calls que
 esta aplicação executa e as duas chamadas ao Microsoft Learn que o Foundry executa, e então a
@@ -447,8 +447,8 @@ Opcional — o AI Gateway é um fluxo de portal sem caminho de IaC: `just gatewa
 ## 📸 Telas
 
 Todos os prints abaixo saem do `just demo`, nas larguras indicadas — então cada um é algo que você
-coloca na sua própria tela em cerca de um minuto, sem conta no Azure. A faixa dessas capturas históricas faz parte daquela build; não é mock.
-A interface atual mantém um pequeno indicador Replay e reúne os detalhes no ícone de informação (spec 059).
+coloca na sua própria tela em cerca de um minuto, sem conta no Azure. O pequeno indicador Replay no cabeçalho é o demo dizendo que é demo; os detalhes ficam no ícone de
+informação (spec 059). `node docs/assets/demo-captures/capture.mjs` refaz todas elas.
 
 | | |
 |---|---|
@@ -456,7 +456,7 @@ A interface atual mantém um pequeno indicador Replay e reúne os detalhes no í
 | **A gaveta de trace** (specs 005, 014). `invoke_agent` sobre duas chamadas MCP do Learn e a chamada de modelo, com durações reais — e a linha que importa: *"O Foundry rastreia o que o Foundry executa. Ferramentas que esta aplicação executa não deixam span."* É a §8 aparecendo na telemetria. | **O inspetor de eventos** (spec 038), a 1680px, onde ele ganha uma coluna própria. Todos os eventos SSE normalizados do BFF no turno, filtrados por tipo, com o relatório de honestidade do próprio contrato acima: *21 de 25 nomes de evento do Foundry verificados contra uma execução gravada.* |
 | [![A tela de agentes: dez cards de um projeto real, cada um com tipo, versão, status e harness; o hosted desabilitado](docs/assets/screenshot-agents.png)](docs/assets/screenshot-agents.png) | [![A mesma tela de agentes no tema escuro](docs/assets/screenshot-dark.png)](docs/assets/screenshot-dark.png) |
 | **A tela de agentes** (specs 019, 030). Dez agentes de um projeto Foundry real — oito deles este repositório não escreveu. O card desabilitado não é escondido: ele diz, no idioma de quem lê, *por que* não pode responder. | **Dois temas** (specs 036, 060). Claro é o padrão, um botão sol/lua na barra lateral alterna, e `system` remove o atributo em vez de escrever um. Todo literal de cor mora na paleta vendorizada; o `app.css` nomeia tokens e um teste garante isso. |
-| [![Dois quadros em largura de celular lado a lado: um turno a 390px, e a barra de navegação aberta por cima dele](docs/assets/screenshot-narrow.png)](docs/assets/screenshot-narrow.png) | [![Um turno que falhou renderizado como card de erro, dizendo "the BFF answered 502"](docs/assets/screenshot-error.png)](docs/assets/screenshot-error.png) |
+| [![Dois quadros em largura de celular lado a lado: um turno a 390px, e a barra de navegação aberta por cima dele](docs/assets/screenshot-narrow.png)](docs/assets/screenshot-narrow.png) | [![Um turno que falhou renderizado como card de erro, dizendo "Failed to fetch"](docs/assets/screenshot-error.png)](docs/assets/screenshot-error.png) |
 | **390px** (spec 047). A barra nunca é escondida — abaixo de 760px ela vem **por cima** da conversa, porque `display: none` também tira o controle da árvore de acessibilidade, e essa barra é o único caminho para cinco das sete telas. | **Um turno que falhou** (spec 003). O BFF foi derrubado no meio da sessão de propósito. Um turno sempre termina em `done` ou `error` e nunca simplesmente emudece — a promessa da §9, renderizada. |
 
 <details>
