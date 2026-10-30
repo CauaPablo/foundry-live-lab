@@ -98,7 +98,12 @@ describe('when the first token arrived', () => {
     // The distinction is invisible when every delta lands in the same millisecond, which is what a
     // one-chunk fixture does — so the answer is split across a real pause. A stamp taken on each
     // delta would sit AFTER the gap; the first-token stamp sits before it.
+    //
+    // The gap is measured, not assumed: a 40ms timer can resolve when `Date.now()` has moved only
+    // 39ms (it failed CI once that way), so the assertions compare against the clock reading taken
+    // when the pause actually ended — the same clock the hook stamps with.
     const GAP_MS = 40
+    let gapEndedAt = Infinity
     const upToFirstToken = twoToolTurn.slice(0, 6)
     const theRest = twoToolTurn.slice(6)
     expect(upToFirstToken.at(-1)).toMatchObject({ type: 'text_delta' })
@@ -114,6 +119,7 @@ describe('when the first token arrived', () => {
                   new TextEncoder().encode(asSseStream(events))
                 controller.enqueue(encode(upToFirstToken))
                 await new Promise((resolve) => setTimeout(resolve, GAP_MS))
+                gapEndedAt = Date.now()
                 controller.enqueue(encode(theRest))
                 controller.close()
               },
@@ -129,9 +135,9 @@ describe('when the first token arrived', () => {
 
     const [turn] = agentTurns(result.current.messages)
     expect(turn.turn.text).toBe('It is 19:00 in Sao Paulo.')
-    // The whole answer took at least the gap; the first token did not wait for it.
-    expect((turn.endedAt ?? 0) - turn.startedAt).toBeGreaterThanOrEqual(GAP_MS)
-    expect((turn.firstTokenAt ?? Infinity) - turn.startedAt).toBeLessThan(GAP_MS)
+    // The whole answer ended after the gap; the first token did not wait for it.
+    expect(turn.endedAt ?? 0).toBeGreaterThanOrEqual(gapEndedAt)
+    expect(turn.firstTokenAt ?? Infinity).toBeLessThan(gapEndedAt)
   })
 
   it('is absent on a turn that never produced text, rather than zero', async () => {
