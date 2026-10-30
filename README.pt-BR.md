@@ -557,7 +557,7 @@ seus custos contínuos.
 
 <div align="center">
 
-**MIT** © [Cauã Carvalho](https://github.com/CauaPablo) — foundry-live-lab · obra original © [Reginaldo Silva](https://github.com/reginaldosilva27)
+**MIT** © [Cauã Carvalho](https://github.com/CauaPablo) — foundry-live-lab
 
 Feito como referência e como material didático. Issues e PRs são bem-vindos.
 
