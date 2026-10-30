@@ -3,8 +3,8 @@
 [English](copilot-learning-paths.md) · [Trilha de aprendizado](learning-journey.pt-BR.md) ·
 [Registro de fontes oficiais](REFERENCES.md#copilot-learning-paths--sources-read-2026-10-09)
 
-**Documentação consultada: 2026-10-09. Nenhuma integração foi executada.** Esta é a fase de pesquisa da
-[issue #37](https://github.com/reginaldosilva27/foundry-live-agent/issues/37), não uma escolha de produto
+**Documentação consultada: 2026-10-09. Nenhuma integração foi executada.** Esta é uma fase de pesquisa,
+não uma escolha de produto
 nem um workshop concluído. Os IDs de fontes abaixo apontam para o registro datado. Disponibilidade e
 acesso precisam ser reconfirmados para conta, versão do cliente, região e política do tenant escolhidos.
 

@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 007-voice-transcript-in-chat |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-15 |
 
 ## Problem / motivation

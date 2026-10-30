@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 045-attachments |
 | **Status** | clarified — blocked on a decision, not on a doc (amended 2026-09-20) |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-16 |
 | **Clarified** | 2026-09-19 |
 | **Blocked on** | a Foundry doc nobody has read (see below) |

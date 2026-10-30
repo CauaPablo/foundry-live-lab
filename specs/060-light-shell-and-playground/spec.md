@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 060-light-shell-and-playground |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-10-15 |
 | **Clarified** | 2026-10-15 |
 

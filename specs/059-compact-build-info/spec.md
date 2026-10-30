@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 059-compact-build-info |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-10-12 |
 
 ## Problem / motivation

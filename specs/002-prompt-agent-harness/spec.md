@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 002-prompt-agent-harness |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-04 |
 
 ## Problem / motivation

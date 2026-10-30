@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 054-bounded-tool-settlement |
 | **Status** | done |
-| **Author** | Reginaldo Silva / Copilot |
+| **Author** | |
 | **Date** | 2026-10-09 |
 
 ## Problem / motivation

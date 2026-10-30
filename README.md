@@ -7,8 +7,6 @@
 **The agent runs *in* Foundry. This repo is the app built *around* it.**
 Streaming chat · live agent activity · distributed traces · real-time voice
 
-<sub>Originally published as [reginaldosilva27/foundry-live-agent](https://github.com/reginaldosilva27/foundry-live-agent).</sub>
-
 <br />
 
 [![One turn in the foundry-live-lab shell: the question, the collapsed reasoning card, four numbered activity rows — two run by the BFF, two by Foundry — and the answer](docs/assets/screenshot-chat.png)](docs/assets/screenshot-chat.png)

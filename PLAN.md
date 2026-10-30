@@ -15,7 +15,7 @@ An open-source reference project showing **Microsoft Foundry Agent Service end t
 runs *in* Foundry, and this repository is the application built *around* it — identity, streaming,
 tracing, voice and a UI — with **swappable agent harnesses** behind one contract.
 
-Maintainer: Cauã Carvalho (foundry-live-lab), building on the original work by Reginaldo Silva. License: MIT.
+Maintainer: Cauã Carvalho. License: MIT.
 
 ---
 

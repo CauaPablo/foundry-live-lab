@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 049-foundry-iq-knowledge |
 | **Status** | planned |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-20 |
 | **Clarified** | 2026-09-20 |
 

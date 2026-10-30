@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 004-frontend-shell |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-04 |
 
 ## Problem / motivation

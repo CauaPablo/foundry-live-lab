@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 000-project-scaffold |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-04 |
 
 ## Problem / motivation
@@ -59,7 +59,7 @@ The "user" here is a contributor or a reader of the repo. They see:
 6. **AC6** — `backend/`, `ai/`, `frontend/`, `infra/` each exist with a `README.md` naming what lives
    there and which spec fills it.
 7. **AC7** — `README.md` and `README.pt-BR.md` both exist, cross-link, and describe the same project.
-8. **AC8** — `LICENSE` is MIT naming Reginaldo Silva; `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`
+8. **AC8** — `LICENSE` is MIT; `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`
    exist.
 9. **AC9** — `.env.example` contains only placeholders for the Foundry variables this project needs
    (project endpoint, agent name, model deployment, harness selector, Voice Live) and **no real

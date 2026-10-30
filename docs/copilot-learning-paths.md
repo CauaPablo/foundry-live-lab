@@ -3,8 +3,8 @@
 [Português](copilot-learning-paths.pt-BR.md) · [Learning journey](learning-journey.md) ·
 [Official source ledger](REFERENCES.md#copilot-learning-paths--sources-read-2026-10-09)
 
-**Documentation reviewed: 2026-10-09. No integration was executed.** This is the research phase of
-[issue #37](https://github.com/reginaldosilva27/foundry-live-agent/issues/37), not a product selection
+**Documentation reviewed: 2026-10-09. No integration was executed.** This is a research phase,
+not a product selection
 or a completed workshop. Source IDs below refer to the dated ledger. Availability and entitlement
 must be checked again for the selected account, client version, region and tenant policy.
 

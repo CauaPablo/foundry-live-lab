@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 011-live-status |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-15 |
 
 ## Problem / motivation
