@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 065-reasoning-effort |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-10-16 |
 | **Clarified** | 2026-10-16 — the owner chose `low` after the voice-latency analysis below |
 

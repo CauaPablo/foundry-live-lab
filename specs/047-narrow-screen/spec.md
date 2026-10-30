@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 047-narrow-screen |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-20 |
 | **Clarified** | 2026-09-20 |
 

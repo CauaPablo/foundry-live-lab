@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 008-spoken-answers |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-15 |
 
 ## Problem / motivation

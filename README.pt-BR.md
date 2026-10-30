@@ -7,8 +7,6 @@
 **O agente roda *dentro* do Foundry. Este repositório é a aplicação construída *ao redor* dele.**
 Chat com streaming · atividade do agente ao vivo · traces distribuídos · voz em tempo real
 
-<sub>Publicado originalmente como [reginaldosilva27/foundry-live-agent](https://github.com/reginaldosilva27/foundry-live-agent).</sub>
-
 <br />
 
 [![Um turno na interface do foundry-live-lab: a pergunta, o card de raciocínio recolhido, quatro linhas numeradas de atividade — duas executadas pelo BFF, duas pelo Foundry — e a resposta](docs/assets/screenshot-chat.png)](docs/assets/screenshot-chat.png)

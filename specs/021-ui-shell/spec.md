@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 021-ui-shell |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-16 |
 
 ## Problem / motivation

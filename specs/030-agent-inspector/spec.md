@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 030-agent-inspector |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-16 · clarified 2026-09-19 |
 
 ## Problem / motivation

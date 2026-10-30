@@ -4,7 +4,7 @@
 |---|---|
 | **ID** | 039-voice-activity |
 | **Status** | done |
-| **Author** | Reginaldo Silva |
+| **Author** | |
 | **Date** | 2026-09-16 |
 | **Clarified** | 2026-09-19 |
 
