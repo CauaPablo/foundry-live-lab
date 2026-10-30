@@ -549,7 +549,7 @@ container dependencies too; do not assume they belong to that group. Stop local 
 
 <div align="center">
 
-**MIT** © [Cauã Carvalho](https://github.com/CauaPablo) — foundry-live-lab · original work © [Reginaldo Silva](https://github.com/reginaldosilva27)
+**MIT** © [Cauã Carvalho](https://github.com/CauaPablo) — foundry-live-lab
 
 Built as a reference and as teaching material. Issues and PRs welcome.
 
